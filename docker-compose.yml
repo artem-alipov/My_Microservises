@@ -1,0 +1,57 @@
+name: myservice
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build: ./user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/userdb
+    ports:
+      - "50051:50051"
+
+  order-service:
+    build: ./order-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/orderdb
+      USER_SERVICE_URL: user-service:50051
+    ports:
+      - "50052:50052"
+
+  gateway-service:
+    build: ./gateway-service
+    depends_on:
+      user-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    environment:
+      USER_SERVICE_URL: user-service:50051
+      ORDER_SERVICE_URL: order-service:50052
+    ports:
+      - "7070:7070"
+
+volumes:
+  postgres_data:
