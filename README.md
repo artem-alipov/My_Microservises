@@ -26,7 +26,9 @@ docker-compose ps
 curl -X POST http://localhost:7070/v1/user/create -H "Content-Type: application/json" -d '{  "id": 1,  "name": "User Name",  "email": "user.name@example.com",  "age": 30}'
 
 Пример ответа:   "message": "User added successfully"
+
 Если пользователь существует микросервис вернет собщение 'User with this ID already exists'
+
 Ответ со сатутсом о выполнении запроса реализован для всех типов запросов реализванных в рамках данного проекта.
 
 Получение информации о пользователе
